@@ -7,7 +7,8 @@ import { deleteComment } from '@/app/actions/deleteComment';
 import { editComment } from '@/app/actions/editComment';
 import EditComment from '@/components/EditComment';
 
-export default async function PostPage({ params }: { params: { id: string } }) {
+
+export default async function PostPage({ params }: { params: Promise<{ id: string }> }) {
 	const user = await AuthGetCurrentUserServer();
 	const { id } = await params
 
