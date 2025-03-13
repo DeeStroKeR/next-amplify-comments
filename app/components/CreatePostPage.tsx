@@ -9,11 +9,11 @@ interface Post {
     id: string;
 }
 
-export default function NewPostPage({ id, isEdit = false, post }: { id?: string, isEdit?: boolean; post?: Post | null }) {
+export default function NewPostPage({ postId, userId, isEdit = false, post }: { postId?: string, userId: string, isEdit?: boolean; post?: Post | null }) {
   return (
-    <form className="flex flex-col gap-2 p-5 w-2xl m-auto" action={isEdit ? editPost : createPost}>
+    <form className="flex flex-col gap-2 p-5 w-2xl m-auto" action={(formData) => isEdit ? editPost(formData) : createPost(formData, userId)}>
       <h1 className="font-bold text-2xl w-full text-center">{isEdit ? "Edit Post" : "Create a new post"}</h1>
-	  <input value={id} hidden name="postId" readOnly/>
+	  <input value={postId} hidden name="postId" readOnly/>
       <input defaultValue={isEdit ? post?.title : ""} className="border rounded-lg border-blue-600 w-full p-2" placeholder="Title" type="text" name="title" required/>
       <input defaultValue={isEdit ? post?.link : ""} className="border rounded-lg border-blue-600 w-full p-2" placeholder="URL" type="url" name="url" required/>
       <div className="mt-4 flex justify-center items-center gap-4">

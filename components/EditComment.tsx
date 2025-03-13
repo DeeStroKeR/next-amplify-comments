@@ -33,7 +33,10 @@ export default function EditComment({ commentId, initialContent, postId, editCom
 
 
     setIsSubmitting(true);
-    await editComment(commentId, content, postId).then(() => { });
+    await editComment(commentId, content, postId).then(() => { 
+      setIsEditing(false);
+      setIsSubmitting(false);
+    });
     // setIsEditing(false);
     // setIsSubmitting(false);
   };

@@ -1,19 +1,50 @@
-import DeletePost from '@/components/DeletePost';
-import { AuthGetCurrentUserServer, freeClient } from '@/utils/amplify-utils';
+'use client';
+
 import Image from "next/image";
 import Link from 'next/link';
-import { deletePostWithComments } from "@/app/actions/deletePost";
+import { useEffect, useState } from 'react';
+import Loader from '@/components/Loader';
+import { useAuthUser } from '@/utils/useAuthUser';
+import { client } from '@/utils/amplify-client';
+import DeletePost from '@/components/DeletePost';
+import { deletePostWithComments } from './actions/deletePost';
+import { type Schema } from "@/amplify/data/resource";
 
+type Post = Schema["Post"]["type"];
+type PostWithComments = Post & { comments?: Schema["Comment"]["type"][] };
 
-export default async function Home() {
-  const user = await AuthGetCurrentUserServer();
+export default function Home() {
+  const [posts, setPosts] = useState<PostWithComments[]>([]);
+  const [errors, setErrors] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const { user, userLoading } = useAuthUser()
 
-  const { data: posts, errors } = await freeClient.models.Post.list({
-    selectionSet: ['id', 'link', 'title', 'owner', 'comments.*']
-  });
+  useEffect(() => {
+    const subscription = client.models.Post.observeQuery({
+      selectionSet: ['id', 'link', 'title', 'owner', 'createdAt', 'updatedAt', 'comments.*'],
+      authMode: 'apiKey'
+    }).subscribe(({ items }) => {
+      console.log('subs post items', items);
+      if (errors) {
+        console.error(errors, 'post subs error');
+        setErrors(true);
+        setIsLoading(false);
+        return;
+      }
+      // @ts-expect-error just skip for now
+      setPosts([...items]);
+      setIsLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   if (errors) {
     return <div>Error loading posts</div>;
+  }
+
+  if (isLoading || userLoading) {
+    return <Loader />;
   }
 
   return (
@@ -33,14 +64,14 @@ export default async function Home() {
                   </div>}
                 </div>
                 <a className='w-fit hover:text-sky-600' href={post.link}>{post.link}</a>
-                <p className='text-sm text-gray-600'>Comments: {post.comments.length}</p>
+                <p className='text-sm text-gray-600'>Comments: {post?.comments?.length || 0}</p>
                 <a className='w-fit inline-block px-3 py-1 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition-colors duration-300' href={`/post/${post.id}`}>View post</a>
               </li>
             ))}
           </ul>
         )}
 
-        {user ?
+        {user?.userId ?
         <Link className='m-auto w-fit inline-block px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition-colors duration-300' href="/post/new">Add New Post</Link>
       :
       <p className='text-center font-semibold w-full'>You need to <Link className='hover:text-sky-600' href='/login'>login</Link> to create a new post</p>}

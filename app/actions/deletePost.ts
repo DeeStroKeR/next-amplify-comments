@@ -1,22 +1,18 @@
-'use server'
-import { cookiesClient } from "@/utils/amplify-utils";
-import { revalidatePath } from "next/cache";
+import { client } from '@/utils/amplify-client';
 
 export async function deletePostWithComments(postId: string) {
-  const { data: postWithComments } = await cookiesClient.models.Post.get(
+  const { data: postWithComments } = await client.models.Post.get(
     { id: postId },
     { selectionSet: ["id", "comments.*"] }
   );
 
   if (postWithComments) {
-    await cookiesClient.models.Post.delete({ id: postWithComments.id });
+    await client.models.Post.delete({ id: postWithComments.id });
 
     await Promise.all(
       postWithComments.comments.map((comment) =>
-        cookiesClient.models.Comment.delete({ id: comment.id })
+        client.models.Comment.delete({ id: comment.id })
       )
     );
   }
-
-  revalidatePath("/");
 }

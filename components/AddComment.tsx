@@ -1,21 +1,16 @@
-import { AuthGetCurrentUserServer, cookiesClient } from '@/utils/amplify-utils';
-import { revalidatePath  } from 'next/cache';
 import Link from 'next/link';
 import SubmitButton from './FormButton';
+import { client } from '@/utils/amplify-client';
 
-export default async function AddComment({ postId } : { postId: string }) {
-	const user = await AuthGetCurrentUserServer();
-
+export default function AddComment({ postId, userId } : { postId: string, userId: string }) {
 	async function AddComment(formData: FormData) {
-		'use server'
-		const { data, errors } = await cookiesClient.models.Comment.create({
-			owner: user?.userId || '',
+		const { data, errors } = await client.models.Comment.create({
+			owner: userId || '',
 			content: formData.get('content')?.toString() || '',
 			postId: postId,
 		})
 
 		console.log(data, errors)
-		revalidatePath(`/post/${postId}`)
 	}
 
 	return <form action={AddComment} className='py-5 w-full'>
